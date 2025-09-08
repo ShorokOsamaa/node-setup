@@ -1,53 +1,50 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
+import HttpError from "../utils/error.util.js";
+import Env from "../config/env.config.js";
 
-export class HttpError extends Error {
-  public status: number;
+const sendErrorDev = (err: HttpError, res: Response) => {
+  res.status(err.statusCode).json({
+    status: err.status,
+    message: err.message,
+    stack: err.stack,
+    error: err,
+  });
+};
 
-  constructor(message: string, status = 500) {
-    super(message);
-    this.status = status;
-    this.name = "HttpError";
+const sendErrorProd = (err: HttpError, res: Response) => {
+  // Operational, trusted error: send message to client
+  if (err.isOperational) {
+    res.status(err.statusCode).json({
+      status: err.status,
+      message: err.message,
+    });
+
+    // Programming or other unknown error: don't leak error details
+  } else {
+    // 1) Log error
+    console.error("===ERROR", err);
+
+    // 2) Send generic message
+    res.status(500).json({
+      status: "error",
+      message: "Something went wrong!",
+    });
   }
-}
+};
 
-export default function errorMiddleware(
-  error: Error | HttpError,
+const globalErrorHandler = (
+  err: HttpError,
   req: Request,
-  res: Response
-) {
-  const status = (error as HttpError).status || 500;
-  const message = error.message || "Internal Server Error";
-  console.log(error);
-
-  // Log error for debugging
-  console.error(
-    `[${new Date().toISOString()}] ${status.toString()} ${req.method} ${req.url} - ${message}`
-  );
-
-  // Handle specific error types
-  if (error.message === "Not allowed by CORS") {
-    return res
-      .status(403)
-      .json({ message: "CORS policy violation", status: 403 });
+  res: Response,
+  next: NextFunction
+) => {
+  err.statusCode = err.statusCode || 500;
+  err.status = err.status || "error";
+  if (Env.SERVER_ENV === "development") {
+    sendErrorDev(err, res);
+  } else {
+    sendErrorProd(err, res);
   }
+};
 
-  if (error.name === "ValidationError") {
-    return res
-      .status(400)
-      .json({ message: `Validation error: ${error.message}`, status: 400 });
-  }
-
-  if (error.name === "JsonWebTokenError") {
-    return res
-      .status(401)
-      .json({ message: "Invalid or expired token", status: 401 });
-  }
-
-  // Hide stack traces in production
-  const response =
-    process.env.NODE_ENV === "production"
-      ? { message, status }
-      : { message, stack: error.stack, status };
-
-  res.status(status).json(response);
-}
+export default globalErrorHandler;
