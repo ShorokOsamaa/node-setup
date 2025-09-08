@@ -5,8 +5,8 @@ import helmet from "helmet";
 import morgan from "morgan";
 
 import Env from "./config/env.config.js";
-import { HttpError } from "./middleware/error.middleware.js";
 import indexRouter from "./routes/index.js";
+import HttpError from "./utils/error.util.js";
 
 const { ALLOWED_ORIGINS, API_VERSION, HOST, NODE_PORT, SERVER_ENV } = Env;
 
@@ -29,8 +29,8 @@ app.use(
   rateLimit({
     handler: () => {
       throw new HttpError(
-        "Too many requests from this IP, please try again after 15 minutes",
-        429
+        429,
+        "Too many requests from this IP, please try again after 15 minutes"
       );
     },
     ipv6Subnet: 64,

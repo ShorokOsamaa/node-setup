@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import HttpError from "../utils/error.util.js";
+import { HttpError } from "../utils/error.util.js";
 import Env from "../config/env.config.js";
 
 const sendErrorDev = (err: HttpError, res: Response) => {
