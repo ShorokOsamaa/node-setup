@@ -1,6 +1,7 @@
-import { Request, Response, NextFunction } from "express";
+import { NextFunction, Response } from "express";
+
+import { AuthRequest, HttpStatus } from "../types/index.js";
 import { verifyToken } from "../utils/auth.util.js";
-import { AuthRequest, HttpStatus, jwtPayload } from "../types/index.js";
 import HttpError from "../utils/error.util.js";
 
 // isAuth middleware to verify JWT token
@@ -12,10 +13,10 @@ export const isAuth = async (
   try {
     // Get token from Authorization header
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    if (!authHeader?.startsWith("Bearer ")) {
       return res.status(HttpStatus.UNAUTHORIZED).json({
-        success: false,
         error: "No token provided or invalid format",
+        success: false,
       });
     }
 
@@ -23,7 +24,7 @@ export const isAuth = async (
     const token = authHeader.split(" ")[1];
 
     // Verify token
-    const decoded = verifyToken(token) as jwtPayload;
+    const decoded = verifyToken(token);
 
     // Attach user info to request
     req.user = {
@@ -37,13 +38,13 @@ export const isAuth = async (
     // Generic error
     throw new HttpError(
       HttpStatus.INTERNAL_SERVER_ERROR,
-      "Authentication error"
+      error instanceof Error ? error.message : "Authentication error"
     );
   }
 };
 
 export const hasValidRole =
-  (roles: Array<string>) =>
+  (roles: string[]) =>
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const userRole = req.user?.role;

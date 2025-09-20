@@ -1,85 +1,18 @@
 import { Request } from "express";
+
 import { UserRoleType } from "../validations/userValidation.js";
 
 // export type UserRole = "USER" | "ADMIN";
 
-export interface User {
-  id: number;
-  email: string;
-  username: string;
-  firstName?: string | null;
-  lastName?: string | null;
-  password: string;
-  role: string;
-  createdAt: Date;
-  updatedAt: Date;
-  resetOtp?: string | null;
-  otpExpiry?: Date | null;
-  resetSessionToken?: string | null;
-  resetSessionExpires?: Date | null;
-}
-
-export interface CreateUserInput {
-  email: string;
-  username: string;
-  firstName: string | null;
-  lastName: string | null;
-  password: string;
-  role: UserRoleType;
-}
-
-export interface UpdateUserInput {
-  email?: string;
-  username?: string | null;
-  firstName?: string | null;
-  lastName?: string | null;
-  password?: string;
-  role?: UserRoleType;
-}
-
-export interface PasswordResetInput {
-  resetOtp?: string | null;
-  resetSessionToken?: string | null;
-}
-
-export type UserPublic = Omit<
-  User,
-  | "resetOtp"
-  | "otpExpiry"
-  | "resetSessionToken"
-  | "resetSessionExpires"
-  | "password"
->;
-
-export type UserListResponse = {
-  users: UserPublic[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    pages: number;
-  };
-};
-
 /**
  * Standard API response wrapper
  */
-export type ApiResponse<T> = {
-  success: boolean;
+export interface ApiResponse<T> {
   data?: T;
-  message?: string;
   error?: string;
-};
-
-/**
- * Authentication
- */
-export type AuthResponse = {
-  user: UserPublic;
-  token: string;
-  refreshToken?: string;
-  expiresIn: number;
-};
+  message?: string;
+  success: boolean;
+}
 
 // Extend Express Request to include user data from JWT
 export interface AuthRequest extends Request {
@@ -89,9 +22,83 @@ export interface AuthRequest extends Request {
   };
 }
 
-export type jwtPayload = {
+/**
+ * Authentication
+ */
+export interface AuthResponse {
+  expiresIn: number;
+  refreshToken?: string;
+  token: string;
+  user: UserPublic;
+}
+
+export interface CreateUserInput {
+  email: string;
+  firstName: null | string;
+  lastName: null | string;
+  password: string;
+  role: UserRoleType;
+  username: string;
+}
+
+export interface jwtPayload {
   user: {
     id: number;
     role: string;
   };
-};
+}
+
+export interface PasswordResetInput {
+  resetOtp?: null | string;
+  resetSessionToken?: null | string;
+}
+
+export interface UpdateUserInput {
+  email?: string;
+  firstName?: null | string;
+  lastName?: null | string;
+  password?: string;
+  role?: UserRoleType;
+  username?: null | string;
+}
+
+export interface User {
+  createdAt: Date;
+  email: string;
+  firstName?: null | string;
+  id: number;
+  lastName?: null | string;
+  otpExpiry?: Date | null;
+  password: string;
+  resetOtp?: null | string;
+  resetSessionExpires?: Date | null;
+  resetSessionToken?: null | string;
+  role: string;
+  updatedAt: Date;
+  username: string;
+}
+
+export interface UserListResponse {
+  pagination: {
+    limit: number;
+    page: number;
+    pages: number;
+    total: number;
+  };
+  users: UserPublic[];
+}
+
+export type UserPublic = Omit<
+  User,
+  | "otpExpiry"
+  | "password"
+  | "resetOtp"
+  | "resetSessionExpires"
+  | "resetSessionToken"
+>;
+
+export interface UserQueryParams {
+  limit: number;
+  page: number;
+  search?: string;
+}

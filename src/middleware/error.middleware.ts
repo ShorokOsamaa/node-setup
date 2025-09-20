@@ -1,23 +1,37 @@
-import { Request, Response, NextFunction } from "express";
-import { HttpError } from "../utils/error.util.js";
+import { Request, Response } from "express";
+
 import Env from "../config/env.config.js";
+import { ErrorResponse } from "../types/index.js";
+import { HttpError } from "../utils/error.util.js";
 
 const sendErrorDev = (err: HttpError, res: Response) => {
-  res.status(err.statusCode).json({
-    status: err.status,
+  const errorResponse: ErrorResponse = {
+    error: err,
     message: err.message,
     stack: err.stack,
-    error: err,
-  });
+    status: err.status,
+  };
+
+  // Include validation details if they exist
+  if (err.validationDetails) {
+    errorResponse.validationDetails = err.validationDetails;
+  }
+
+  res.status(err.statusCode).json(errorResponse);
 };
 
 const sendErrorProd = (err: HttpError, res: Response) => {
   // Operational, trusted error: send message to client
   if (err.isOperational) {
-    res.status(err.statusCode).json({
-      status: err.status,
+    const errorResponse: ErrorResponse = {
       message: err.message,
-    });
+      status: err.status,
+    };
+    if (err.validationDetails) {
+      errorResponse.validationDetails = err.validationDetails;
+    }
+
+    res.status(err.statusCode).json(errorResponse);
 
     // Programming or other unknown error: don't leak error details
   } else {
@@ -26,18 +40,13 @@ const sendErrorProd = (err: HttpError, res: Response) => {
 
     // 2) Send generic message
     res.status(500).json({
-      status: "error",
       message: "Something went wrong!",
+      status: "error",
     });
   }
 };
 
-const globalErrorHandler = (
-  err: HttpError,
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+const globalErrorHandler = (err: HttpError, req: Request, res: Response) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || "error";
   if (Env.SERVER_ENV === "development") {

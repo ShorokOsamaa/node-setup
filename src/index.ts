@@ -5,7 +5,8 @@ import helmet from "helmet";
 import morgan from "morgan";
 
 import Env from "./config/env.config.js";
-import indexRouter from "./routes/index.js";
+import globalErrorHandler from "./middleware/error.middleware.js";
+import { userRoutes } from "./routes/index.js";
 import HttpError from "./utils/error.util.js";
 
 const { ALLOWED_ORIGINS, API_VERSION, HOST, NODE_PORT, SERVER_ENV } = Env;
@@ -21,7 +22,7 @@ app.use(
 );
 
 // Logging middleware - "dev" for development logging "combined" for production logging
-app.use(morgan(SERVER_ENV === "dev" ? "dev" : "combined"));
+app.use(morgan(SERVER_ENV === "development" ? "dev" : "combined"));
 
 // Security middleware
 app.use(helmet());
@@ -47,7 +48,14 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.get("/", (req: Request, res: Response) => res.sendStatus(200));
-app.use(API_VERSION, indexRouter);
+app.use(`${API_VERSION}/users`, userRoutes);
+
+// 404 routes
+app.all("/{*any}", (req: Request, res: Response) => {
+  throw new HttpError(404, `Route not found. Can't find ${req.originalUrl}`);
+});
+
+app.use(globalErrorHandler);
 
 // Start the Express server
 app.listen(NODE_PORT, () => {

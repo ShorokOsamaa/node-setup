@@ -3,8 +3,7 @@ import { z } from "zod";
 export const UserRoleSchema = z.enum(["USER", "ADMIN"]);
 
 export const CreateUserSchema = z.object({
-  email: z.string().email({ message: "Invalid email address" }),
-  username: z.string(),
+  email: z.email({ message: "Invalid email address" }),
   firstName: z.string().optional().nullable(),
   lastName: z.string().optional().nullable(),
   password: z
@@ -20,11 +19,11 @@ export const CreateUserSchema = z.object({
       message: "Password must contain at least one special character",
     }),
   role: UserRoleSchema.default("USER"),
+  username: z.string(),
 });
 
 export const UpdateUserSchema = z.object({
-  email: z.string().email({ message: "Invalid email address" }).optional(),
-  username: z.string().optional().nullable(),
+  email: z.email({ message: "Invalid email address" }).optional(),
   firstName: z.string().optional().nullable(),
   lastName: z.string().optional().nullable(),
   password: z
@@ -41,6 +40,13 @@ export const UpdateUserSchema = z.object({
     })
     .optional(),
   role: UserRoleSchema.optional(),
+  username: z.string().optional().nullable(),
+});
+
+export const GetAllUsersSchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).default(10),
+  page: z.coerce.number().int().min(1).default(1),
+  search: z.string().optional(),
 });
 
 export const PasswordResetSchema = z.object({
@@ -48,7 +54,7 @@ export const PasswordResetSchema = z.object({
   resetSessionToken: z.string().optional().nullable(),
 });
 
-export type UserRoleType = z.infer<typeof UserRoleSchema>;
 export type CreateUserSchemaType = z.infer<typeof CreateUserSchema>;
-export type UpdateUserSchemaType = z.infer<typeof UpdateUserSchema>;
 export type PasswordResetSchemaType = z.infer<typeof PasswordResetSchema>;
+export type UpdateUserSchemaType = z.infer<typeof UpdateUserSchema>;
+export type UserRoleType = z.infer<typeof UserRoleSchema>;

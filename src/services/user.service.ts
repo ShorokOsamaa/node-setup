@@ -1,5 +1,11 @@
 import UserData from "../persistance/user.data.js";
-import { CreateUserInput, HttpStatus, UserPublic } from "../types/index.js";
+import {
+  CreateUserInput,
+  HttpStatus,
+  UserListResponse,
+  UserPublic,
+  UserQueryParams,
+} from "../types/index.js";
 import HttpError from "../utils/error.util.js";
 import { hashPassword } from "../utils/hashing.util.js";
 
@@ -7,7 +13,7 @@ class UserService {
   private userData = new UserData();
 
   createUser = async (data: CreateUserInput): Promise<UserPublic> => {
-    const { email, username, firstName, lastName, password, role } = data;
+    const { email, firstName, lastName, password, role, username } = data;
 
     const existingUser = await this.userData.findByEmail(email);
     if (existingUser) {
@@ -22,15 +28,20 @@ class UserService {
 
     const userData: CreateUserInput = {
       email,
-      username,
-      password: hashedPassword,
       firstName,
       lastName,
+      password: hashedPassword,
       role,
+      username,
     };
 
     const user: UserPublic = await this.userData.createUser(userData);
     return user;
+  };
+
+  getAllUsers = async (params: UserQueryParams): Promise<UserListResponse> => {
+    const users: UserListResponse = await this.userData.getAllUsers(params);
+    return users;
   };
 }
 

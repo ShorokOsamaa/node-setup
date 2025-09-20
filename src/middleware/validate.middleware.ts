@@ -1,52 +1,56 @@
-import { Request, Response, NextFunction } from "express";
-import { ZodError } from "zod";
-import {
-  CreateUserSchema,
-  UpdateUserSchema,
-} from "../validations/userValidation.js";
+import { NextFunction, Request, Response } from "express";
+import { ZodError, ZodIssue, ZodType } from "zod";
 
-export const validateCreateUser = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    CreateUserSchema.parse(req.body);
-    next();
-  } catch (error) {
-    if (error instanceof ZodError) {
-      const errorDetails = error.issues.map((err) => ({
-        field: err.path.join("."),
-        message: err.message,
-      }));
-      return res.status(400).json({
-        message: "Validation failed",
-        details: errorDetails,
-      });
-    }
-    res.status(500).json({ message: "Internal server error", details: [] });
-  }
-};
+import HttpError from "../utils/error.util.js";
+import { ValidationDetail } from "../types/index.js";
+import { ZodInvalidTypeIssue } from "zod/v3";
 
-export const validateUpdateUser = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    UpdateUserSchema.parse(req.body);
-    next();
-  } catch (error) {
-    if (error instanceof ZodError) {
-      const errorDetails = error.issues.map((err) => ({
-        field: err.path.join("."),
-        message: err.message,
-      }));
-      return res.status(400).json({
-        message: "Validation failed",
-        details: errorDetails,
-      });
+declare global {
+  namespace Express {
+    interface Request {
+      validatedBody?: unknown;
+      validatedParams?: unknown;
+      validatedQuery?: unknown;
     }
-    res.status(500).json({ message: "Internal server error", details: [] });
   }
+}
+
+export const validate = <T extends ZodType>(
+  schema: T,
+  source: "body" | "params" | "query" = "body"
+) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    try {
+      const validatedData = schema.parse(req[source]);
+      console.log("Validated Data:", validatedData);
+
+      // Store validated data in a new property
+      if (source === "body") {
+        req.validatedBody = validatedData;
+        req.body = validatedData; // Body can be overwritten
+      } else if (source === "query") {
+        req.validatedQuery = validatedData;
+      } else if (source === "params") {
+        req.validatedParams = validatedData;
+      }
+      next();
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const errorDetails: ValidationDetail[] = error.issues.map(
+          (err: ZodIssue) => ({
+            code: err.code,
+            field: err.path.join("."),
+            message: err.message,
+            received:
+              err.code === "invalid_type"
+                ? (err as ZodInvalidTypeIssue).received
+                : undefined,
+          })
+        );
+        throw new HttpError(400, "Validation failed", errorDetails);
+      }
+      console.log("Validation Error:", error);
+      throw new HttpError(500, "Internal server error");
+    }
+  };
 };

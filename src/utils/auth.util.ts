@@ -1,9 +1,10 @@
 import jwt, { Secret, SignOptions } from "jsonwebtoken";
-import Env from "../config/env.config.js";
-import HttpError from "./error.util.js";
-import { HttpStatus, jwtPayload, UserPublic } from "../types/index.js";
 
-const { ACCESS_TOKEN_SECRET, ACCESS_TOKEN_EXPIRE } = Env;
+import Env from "../config/env.config.js";
+import { HttpStatus, jwtPayload, UserPublic } from "../types/index.js";
+import HttpError from "./error.util.js";
+
+const { ACCESS_TOKEN_EXPIRE, ACCESS_TOKEN_SECRET } = Env;
 
 const signUser = (user: UserPublic) => {
   if (!ACCESS_TOKEN_SECRET) {
