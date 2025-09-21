@@ -9,6 +9,7 @@ import {
 } from "../types/index.js";
 import HttpError from "../utils/error.util.js";
 import { hashPassword } from "../utils/hashing.util.js";
+import { sendResetPasswordEmail } from "../utils/email.util.js";
 
 class UserService {
   private userData = new UserData();
@@ -99,7 +100,13 @@ class UserService {
 
     // SEND EMAIL
     console.log(`Password reset OTP for ${email}: ${otp}`);
-    // In production, integrate with an email service to send the OTP
+
+    await sendResetPasswordEmail(email, otp).catch((err) => {
+      throw new HttpError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to send OTP email"
+      );
+    });
   };
 
   verifyOtp = async (email: string, otp: string): Promise<string> => {

@@ -16,6 +16,12 @@ const Env = {
   SALT_ROUNDS: parseInt(process.env.SALT_ROUNDS ?? "10", 10),
 
   SERVER_ENV: process.env.SERVER_ENV ?? "deployment",
+
+  SENDER_EMAIL: process.env.SENDER_EMAIL,
+  SENDER_PASSWORD: process.env.SENDER_PASSWORD,
+  EMAIL_HOST: process.env.EMAIL_HOST,
+  EMAIL_PORT: parseInt(process.env.EMAIL_PORT ?? "587", 10),
+  EMAIL_CC: process.env.EMAIL_CC,
 };
 console.log("Environment Variables:", Env);
 export default Env;
