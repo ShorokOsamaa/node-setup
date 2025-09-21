@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 
 import Env from "../config/env.config.js";
 import { ErrorResponse } from "../types/index.js";
@@ -46,7 +46,12 @@ const sendErrorProd = (err: HttpError, res: Response) => {
   }
 };
 
-const globalErrorHandler = (err: HttpError, req: Request, res: Response) => {
+const globalErrorHandler = (
+  err: HttpError,
+  req: Request,
+  res: Response,
+  next: NextFunction // eslint-disable-line no-unused-vars // this is needed to identify it as an error handling middleware
+) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || "error";
   if (Env.SERVER_ENV === "development") {

@@ -5,6 +5,8 @@ import { validate } from "../middleware/validate.middleware.js";
 import {
   CreateUserSchema,
   GetAllUsersSchema,
+  UpdateUserSchema,
+  UserIdParamSchema,
 } from "../validations/userValidation.js";
 
 const router = Router();
@@ -14,8 +16,14 @@ router
   .route("/")
   .post(validate(CreateUserSchema), userController.createUser)
   .get(validate(GetAllUsersSchema, "query"), userController.getAllUsers);
-// router.get("/:id", userController.getUserById);
-// router.patch("/:id", validateUpdateUser, userController.updateUser);
+router
+  .route("/:id")
+  .get(validate(UserIdParamSchema, "params"), userController.getUserById)
+  .patch(
+    validate(UserIdParamSchema, "params"),
+    validate(UpdateUserSchema, "body"),
+    userController.updateUser
+  );
 // router.delete("/:id", userController.deleteUser);
 
 export default router;

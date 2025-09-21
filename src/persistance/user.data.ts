@@ -1,6 +1,7 @@
 import { Prisma, PrismaClient } from "@prisma/client";
 
 import {
+  HttpStatus,
   User,
   UserListResponse,
   UserPublic,
@@ -10,6 +11,7 @@ import {
   CreateUserSchemaType,
   UserRoleSchema,
 } from "../validations/userValidation.js";
+import HttpError from "../utils/error.util.js";
 
 class UserData {
   private prisma: PrismaClient;
@@ -58,12 +60,16 @@ class UserData {
     return user;
   }
 
-  async findById(id: number): Promise<null | User> {
+  async findById(id: number): Promise<UserPublic> {
     const user = await this.prisma.user.findUnique({
       where: { id },
     });
 
-    return user;
+    if (!user) {
+      throw new HttpError(HttpStatus.NOT_FOUND, "User not found");
+    }
+
+    return this.convertToUserPublicDTO(user);
   }
 
   async findByUsername(username: string): Promise<null | User> {
@@ -101,6 +107,17 @@ class UserData {
       },
       users: usersList,
     };
+  }
+
+  async updateUser(
+    id: number,
+    data: Partial<CreateUserSchemaType>
+  ): Promise<UserPublic> {
+    const user = await this.prisma.user.update({
+      where: { id },
+      data,
+    });
+    return this.convertToUserPublicDTO(user);
   }
 
   private convertToUserPublicDTO(user: User): UserPublic {

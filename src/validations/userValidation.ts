@@ -49,6 +49,10 @@ export const GetAllUsersSchema = z.object({
   search: z.string().optional(),
 });
 
+export const UserIdParamSchema = z.object({
+  id: z.coerce.number({ message: "Invalid user ID format" }),
+});
+
 export const PasswordResetSchema = z.object({
   resetOtp: z.string().optional().nullable(),
   resetSessionToken: z.string().optional().nullable(),

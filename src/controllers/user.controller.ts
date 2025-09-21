@@ -35,6 +35,32 @@ class UserController {
     };
     return res.status(HttpStatus.OK).json(response);
   };
+
+  getUserById = async (req: Request, res: Response) => {
+    const { id } = req.validatedParams as { id: number };
+
+    const user: UserPublic = await this.userService.getUserById(id);
+    const response: ApiResponse<UserPublic> = {
+      data: user,
+      message: "User retrieved successfully",
+      success: true,
+    };
+    return res.status(HttpStatus.OK).json(response);
+  };
+
+  updateUser = async (req: Request, res: Response) => {
+    const { id } = req.validatedParams as { id: number };
+    const data: Partial<CreateUserInput> =
+      req.validatedBody as Partial<CreateUserInput>;
+    const updatedUser: UserPublic = await this.userService.updateUser(id, data);
+
+    const response: ApiResponse<UserPublic> = {
+      data: updatedUser,
+      message: "User updated successfully",
+      success: true,
+    };
+    return res.status(HttpStatus.OK).json(response);
+  };
 }
 
 export default UserController;
