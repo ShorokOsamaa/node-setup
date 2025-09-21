@@ -71,7 +71,7 @@ export interface User {
   otpExpiry?: Date | null;
   password: string;
   resetOtp?: null | string;
-  resetSessionExpires?: Date | null;
+  resetSessionExpiry?: Date | null;
   resetSessionToken?: null | string;
   role: string;
   updatedAt: Date;
@@ -93,7 +93,7 @@ export type UserPublic = Omit<
   | "otpExpiry"
   | "password"
   | "resetOtp"
-  | "resetSessionExpires"
+  | "resetSessionExpiry"
   | "resetSessionToken"
 >;
 

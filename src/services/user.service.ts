@@ -1,3 +1,4 @@
+import { randomBytes, randomInt } from "crypto";
 import UserData from "../persistance/user.data.js";
 import {
   CreateUserInput,
@@ -70,6 +71,98 @@ class UserService {
       throw new HttpError(HttpStatus.NOT_FOUND, "User not found");
     }
     await this.userData.deleteUser(id);
+  };
+
+  forgotPassword = async (email: string): Promise<void> => {
+    const user = await this.userData.findByEmail(email);
+    if (!user) {
+      throw new HttpError(
+        HttpStatus.NOT_FOUND,
+        "User with this email not found"
+      );
+    }
+
+    // GENERATE OTP
+    const otp = randomInt(100000, 999999) + "";
+    const expiryMinutes = 10; // Minutes
+    const otpObject = await this.userData.initiatePasswordReset(
+      user.email,
+      otp,
+      expiryMinutes
+    );
+    if (!otpObject) {
+      throw new HttpError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to set OTP"
+      );
+    }
+
+    // SEND EMAIL
+    console.log(`Password reset OTP for ${email}: ${otp}`);
+    // In production, integrate with an email service to send the OTP
+  };
+
+  verifyOtp = async (email: string, otp: string): Promise<string> => {
+    const user = await this.userData.findByEmail(email);
+    if (!user) {
+      throw new HttpError(
+        HttpStatus.NOT_FOUND,
+        "User with this email not found"
+      );
+    }
+    if (user.resetOtp !== otp) {
+      throw new HttpError(HttpStatus.BAD_REQUEST, "Invalid OTP");
+    }
+    if (user.otpExpiry && user.otpExpiry < new Date()) {
+      throw new HttpError(HttpStatus.BAD_REQUEST, "OTP has expired");
+    }
+
+    // OTP is valid
+    const expiryMinutes = 10;
+    const sessionToken = randomBytes(32).toString("hex");
+    const resetSessionToken = await this.userData.verifyOtp(
+      user.id,
+      otp,
+      expiryMinutes,
+      sessionToken
+    );
+
+    if (!resetSessionToken) {
+      throw new HttpError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to create reset session"
+      );
+    }
+    return resetSessionToken;
+  };
+
+  resetPassword = async (
+    email: string,
+    newPassword: string,
+    resetToken: string
+  ): Promise<void> => {
+    const user = await this.userData.findByEmail(email);
+    if (!user) {
+      throw new HttpError(
+        HttpStatus.NOT_FOUND,
+        "User with this email not found"
+      );
+    } else if (user.resetSessionToken !== resetToken) {
+      throw new HttpError(HttpStatus.BAD_REQUEST, "Invalid reset token");
+    } else if (
+      user.resetSessionExpiry &&
+      user.resetSessionExpiry < new Date()
+    ) {
+      throw new HttpError(HttpStatus.BAD_REQUEST, "Reset session has expired");
+    }
+    const hashedPassword = await hashPassword(newPassword);
+    await this.userData.updateUser(user.id, {
+      password: hashedPassword,
+      resetOtp: null,
+      otpExpiry: null,
+      resetSessionToken: null,
+      resetSessionExpiry: null,
+    });
   };
 
   getAllUsers = async (params: UserQueryParams): Promise<UserListResponse> => {

@@ -53,12 +53,45 @@ export const UserIdParamSchema = z.object({
   id: z.coerce.number({ message: "Invalid user ID format" }),
 });
 
-export const PasswordResetSchema = z.object({
-  resetOtp: z.string().optional().nullable(),
-  resetSessionToken: z.string().optional().nullable(),
+export const PasswordResetRequestSchema = z.object({
+  email: z.email({ message: "Invalid email address" }),
+});
+
+export const PasswordResetVerifySchema = z.object({
+  email: z.email({ message: "Invalid email address" }),
+  otp: z.coerce
+    .string()
+    .min(6, { message: "OTP must be at least 6 characters long" }),
+});
+
+export const PasswordResetConfirmSchema = z.object({
+  email: z.email({ message: "Invalid email address" }),
+  newPassword: z
+    .string()
+    .min(8, { message: "Password must be at least 8 characters long" })
+    .regex(/[A-Z]/, {
+      message: "Password must contain at least one uppercase letter",
+    })
+    .regex(/[a-z]/, {
+      message: "Password must contain at least one lowercase letter",
+    })
+    .regex(/[!@#$%^&*(),.?":{}|<>]/, {
+      message: "Password must contain at least one special character",
+    }),
+  resetToken: z.string().min(1, { message: "Reset token is required" }),
 });
 
 export type CreateUserSchemaType = z.infer<typeof CreateUserSchema>;
-export type PasswordResetSchemaType = z.infer<typeof PasswordResetSchema>;
 export type UpdateUserSchemaType = z.infer<typeof UpdateUserSchema>;
 export type UserRoleType = z.infer<typeof UserRoleSchema>;
+export type UserIdParamSchemaType = z.infer<typeof UserIdParamSchema>;
+export type GetAllUsersSchemaType = z.infer<typeof GetAllUsersSchema>;
+export type PasswordResetRequestSchemaType = z.infer<
+  typeof PasswordResetRequestSchema
+>;
+export type PasswordResetVerifySchemaType = z.infer<
+  typeof PasswordResetVerifySchema
+>;
+export type PasswordResetConfirmSchemaType = z.infer<
+  typeof PasswordResetConfirmSchema
+>;

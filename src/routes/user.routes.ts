@@ -5,12 +5,36 @@ import { validate } from "../middleware/validate.middleware.js";
 import {
   CreateUserSchema,
   GetAllUsersSchema,
+  PasswordResetConfirmSchema,
+  PasswordResetRequestSchema,
+  PasswordResetVerifySchema,
   UpdateUserSchema,
   UserIdParamSchema,
 } from "../validations/userValidation.js";
 
 const router = Router();
 const userController = new UserController();
+
+// // Auth
+// router.post('/register', UserController.register);
+// router.post('/login', UserController.login);
+
+// Password Reset
+router.post(
+  "/forgot-password",
+  validate(PasswordResetRequestSchema, "body"),
+  userController.forgotPassword
+);
+router.post(
+  "/verify-otp",
+  validate(PasswordResetVerifySchema),
+  userController.verifyOtp
+);
+router.post(
+  "/reset-password",
+  validate(PasswordResetConfirmSchema),
+  userController.resetPassword
+);
 
 router
   .route("/")

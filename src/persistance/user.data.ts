@@ -86,10 +86,7 @@ class UserData {
     };
   }
 
-  async updateUser(
-    id: number,
-    data: Partial<CreateUserSchemaType>
-  ): Promise<UserPublic> {
+  async updateUser(id: number, data: Partial<User>): Promise<UserPublic> {
     const user = await this.prisma.user.update({
       where: { id },
       data,
@@ -102,6 +99,60 @@ class UserData {
       where: { id },
       data: { isDeleted: true },
     });
+  }
+
+  async initiatePasswordReset(
+    email: string,
+    otp: string,
+    expiryMinutes: number
+  ): Promise<UserPublic> {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      throw new HttpError(HttpStatus.NOT_FOUND, "User not found");
+    }
+    const otpExpiry = new Date(Date.now() + expiryMinutes * 60 * 1000); // OTP valid for 10 minutes
+    const otpObject = await this.prisma.user.update({
+      where: { email },
+      data: { resetOtp: otp, otpExpiry },
+    });
+    return this.convertToUserPublicDTO(otpObject);
+  }
+
+  async verifyOtp(
+    userId: number,
+    otp: string,
+    expiryMinutes: number,
+    sessionToken: string
+  ): Promise<string> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new HttpError(HttpStatus.NOT_FOUND, "User not found");
+    }
+    if (user.resetOtp !== otp) {
+      throw new HttpError(HttpStatus.BAD_REQUEST, "Invalid OTP");
+    }
+    if (user.otpExpiry && user.otpExpiry < new Date()) {
+      throw new HttpError(HttpStatus.BAD_REQUEST, "OTP has expired");
+    }
+    const newExpiry = new Date(Date.now() + expiryMinutes * 60 * 1000);
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        resetOtp: null,
+        otpExpiry: null,
+        resetSessionToken: sessionToken,
+        resetSessionExpiry: newExpiry,
+      },
+    });
+
+    if (!updatedUser) {
+      throw new HttpError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to create reset session"
+      );
+    }
+
+    return sessionToken;
   }
 
   private convertToUserPublicDTO(user: User): UserPublic {

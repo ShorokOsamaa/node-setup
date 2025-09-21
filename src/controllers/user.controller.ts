@@ -7,6 +7,12 @@ import {
   UserQueryParams,
 } from "../types/index.js";
 import { ApiResponse, HttpStatus, UserPublic } from "../types/index.js";
+import {
+  PasswordResetConfirmSchemaType,
+  PasswordResetRequestSchemaType,
+  PasswordResetVerifySchemaType,
+  UserIdParamSchemaType,
+} from "../validations/userValidation.js";
 
 class UserController {
   private userService = new UserService();
@@ -63,11 +69,46 @@ class UserController {
   };
 
   deleteUser = async (req: Request, res: Response) => {
-    const { id } = req.validatedParams as { id: number };
+    const { id } = req.validatedParams as UserIdParamSchemaType;
     await this.userService.deleteUser(id);
     const response: ApiResponse<null> = {
       data: null,
       message: "User deleted successfully",
+      success: true,
+    };
+    return res.status(HttpStatus.OK).json(response);
+  };
+
+  // Password Reset Handlers
+  forgotPassword = async (req: Request, res: Response) => {
+    const { email } = req.validatedBody as PasswordResetRequestSchemaType;
+    await this.userService.forgotPassword(email);
+    const response: ApiResponse<null> = {
+      data: null,
+      message: "Password reset OTP sent to email",
+      success: true,
+    };
+    return res.status(HttpStatus.OK).json(response);
+  };
+
+  verifyOtp = async (req: Request, res: Response) => {
+    const { email, otp } = req.validatedBody as PasswordResetVerifySchemaType;
+    const resetToken: string = await this.userService.verifyOtp(email, otp);
+    const response: ApiResponse<{ resetToken: string }> = {
+      data: { resetToken },
+      message: "OTP verified successfully",
+      success: true,
+    };
+    return res.status(HttpStatus.OK).json(response);
+  };
+
+  resetPassword = async (req: Request, res: Response) => {
+    const { email, newPassword, resetToken } =
+      req.validatedBody as PasswordResetConfirmSchemaType;
+    await this.userService.resetPassword(email, newPassword, resetToken);
+    const response: ApiResponse<null> = {
+      data: null,
+      message: "Password reset successfully",
       success: true,
     };
     return res.status(HttpStatus.OK).json(response);

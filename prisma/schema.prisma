@@ -20,8 +20,8 @@ model User {
   isDeleted Boolean  @default(false)
 
   // Password reset
-  resetOtp            String?
-  otpExpiry           DateTime?
-  resetSessionToken   String?
-  resetSessionExpires DateTime?
+  resetOtp           String?
+  otpExpiry          DateTime?
+  resetSessionToken  String?
+  resetSessionExpiry DateTime?
 }
