@@ -23,7 +23,7 @@ router
     validate(UserIdParamSchema, "params"),
     validate(UpdateUserSchema, "body"),
     userController.updateUser
-  );
-// router.delete("/:id", userController.deleteUser);
+  )
+  .delete(validate(UserIdParamSchema, "params"), userController.deleteUser);
 
 export default router;

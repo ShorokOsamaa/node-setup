@@ -24,33 +24,10 @@ class UserData {
     return this.prisma.user.count({ where });
   }
 
-  // private convertToUserPublicDTO(user: User): UserPublic {
-  //   const {
-  //     id,
-  //     email,
-  //     username,
-  //     firstName,
-  //     lastName,
-  //     role,
-  //     createdAt,
-  //     updatedAt,
-  //   } = user;
-  //   return {
-  //     id,
-  //     email,
-  //     username,
-  //     firstName,
-  //     lastName,
-  //     role,
-  //     createdAt,
-  //     updatedAt,
-  //   };
-  // }
-
-  createUser = async (data: CreateUserSchemaType): Promise<UserPublic> => {
+  async createUser(data: CreateUserSchemaType): Promise<UserPublic> {
     const user = await this.prisma.user.create({ data });
     return this.convertToUserPublicDTO(user);
-  };
+  }
 
   async findByEmail(email: string): Promise<null | User> {
     const user = await this.prisma.user.findUnique({
@@ -81,7 +58,7 @@ class UserData {
   async getAllUsers(params: UserQueryParams): Promise<UserListResponse> {
     const { limit, page, search } = params;
 
-    const where: Prisma.UserWhereInput = {};
+    const where: Prisma.UserWhereInput = { isDeleted: false };
     if (search) {
       where.OR = [
         { email: { contains: search, mode: "insensitive" } },
@@ -118,6 +95,13 @@ class UserData {
       data,
     });
     return this.convertToUserPublicDTO(user);
+  }
+
+  async deleteUser(id: number): Promise<void> {
+    await this.prisma.user.update({
+      where: { id },
+      data: { isDeleted: true },
+    });
   }
 
   private convertToUserPublicDTO(user: User): UserPublic {

@@ -61,6 +61,17 @@ class UserController {
     };
     return res.status(HttpStatus.OK).json(response);
   };
+
+  deleteUser = async (req: Request, res: Response) => {
+    const { id } = req.validatedParams as { id: number };
+    await this.userService.deleteUser(id);
+    const response: ApiResponse<null> = {
+      data: null,
+      message: "User deleted successfully",
+      success: true,
+    };
+    return res.status(HttpStatus.OK).json(response);
+  };
 }
 
 export default UserController;

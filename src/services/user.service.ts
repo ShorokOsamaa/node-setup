@@ -64,6 +64,14 @@ class UserService {
     return updatedUser;
   };
 
+  deleteUser = async (id: number): Promise<void> => {
+    const user = await this.userData.findById(id);
+    if (!user) {
+      throw new HttpError(HttpStatus.NOT_FOUND, "User not found");
+    }
+    await this.userData.deleteUser(id);
+  };
+
   getAllUsers = async (params: UserQueryParams): Promise<UserListResponse> => {
     const users: UserListResponse = await this.userData.getAllUsers(params);
     return users;
