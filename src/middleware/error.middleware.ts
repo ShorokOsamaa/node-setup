@@ -50,7 +50,8 @@ const globalErrorHandler = (
   err: HttpError,
   req: Request,
   res: Response,
-  next: NextFunction // eslint-disable-line no-unused-vars // this is needed to identify it as an error handling middleware
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  next: NextFunction // this is needed to identify it as an error handling middleware
 ) => {
   console.log(err);
   err.statusCode = err.statusCode || 500;

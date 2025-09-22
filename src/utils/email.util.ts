@@ -1,5 +1,7 @@
 import nodemailer from "nodemailer";
 import Env from "../config/env.config.js";
+import HttpError from "./error.util.js";
+import { HttpStatus } from "../types/error.type.js";
 
 const { SENDER_EMAIL, SENDER_PASSWORD, EMAIL_HOST, EMAIL_PORT, EMAIL_CC } = Env;
 
@@ -24,13 +26,16 @@ export const sendEmail = async (
     html, // html body
   };
 
-  await transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.error("Error sending email:", error);
-    } else {
-      console.log("Email sent:", info.response);
-    }
-  });
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Email sent:", info.response);
+  } catch (error) {
+    console.error("Error sending email:", error);
+    throw new HttpError(
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      "Error sending email"
+    );
+  }
 };
 
 export const sendResetPasswordEmail = async (

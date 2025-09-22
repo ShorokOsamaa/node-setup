@@ -51,7 +51,7 @@ app.get("/", (req: Request, res: Response) => res.sendStatus(200));
 app.use(`${API_VERSION}/users`, userRoutes);
 
 // 404 routes
-app.all("/{*any}", (req: Request, res: Response) => {
+app.all("/{*any}", (req: Request) => {
   throw new HttpError(404, `Route not found. Can't find ${req.originalUrl}`);
 });
 

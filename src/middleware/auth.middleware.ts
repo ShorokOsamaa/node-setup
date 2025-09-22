@@ -63,7 +63,7 @@ export const isAuth = async (
 
 export const hasValidRole =
   (roles: string[]) =>
-  async (req: AuthRequest, res: Response, next: NextFunction) => {
+  (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const userRole = req.user?.role;
       if (!userRole) {

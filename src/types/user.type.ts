@@ -1,4 +1,5 @@
 import { Request } from "express";
+import { JwtPayload as DefaultJwtPayload } from "jsonwebtoken";
 
 import { UserRoleType } from "../validations/userValidation.js";
 
@@ -41,7 +42,7 @@ export interface CreateUserInput {
   username: string;
 }
 
-export interface JwtPayload {
+export interface JwtPayload extends DefaultJwtPayload {
   user: {
     id: number;
     role: string;

@@ -1,42 +1,42 @@
 import { NextFunction, Request, Response } from "express";
-import { ZodError, ZodIssue, ZodType } from "zod";
+import { z, ZodError, ZodIssue, ZodType } from "zod";
 
 import HttpError from "../utils/error.util.js";
 import { ValidationDetail } from "../types/index.js";
 import { ZodInvalidTypeIssue } from "zod/v3";
 
-declare global {
-  namespace Express {
-    interface Request {
-      validatedBody?: unknown;
-      validatedParams?: unknown;
-      validatedQuery?: unknown;
-    }
+declare module "express" {
+  interface Request {
+    validatedBody?: unknown;
+    validatedParams?: unknown;
+    validatedQuery?: unknown;
   }
 }
 
-export const validate = <T extends ZodType>(
-  schema: T,
+export const validate = (
+  schema: ZodType,
   source: "body" | "params" | "query" = "body"
 ) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     try {
-      const validatedData = schema.parse(req[source]);
+      const validatedData: z.infer<ZodType> = schema.parse(req[source]);
       console.log("Validated Data:", validatedData);
 
       // Store validated data in a new property
       if (source === "body") {
         req.validatedBody = validatedData;
-        req.body = validatedData; // Body can be overwritten
+        req.body = validatedData;
       } else if (source === "query") {
         req.validatedQuery = validatedData;
-      } else if (source === "params") {
+      } else {
+        // source === "params"
         req.validatedParams = validatedData;
       }
       next();
     } catch (error) {
       if (error instanceof ZodError) {
         const errorDetails: ValidationDetail[] = error.issues.map(
+          // eslint-disable-next-line @typescript-eslint/no-deprecated
           (err: ZodIssue) => ({
             code: err.code,
             field: err.path.join("."),

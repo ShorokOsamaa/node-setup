@@ -86,10 +86,7 @@ class UserService {
 
   deleteUser = async (id: number): Promise<void> => {
     const user = await this.userData.findById(id);
-    if (!user) {
-      throw new HttpError(HttpStatus.NOT_FOUND, "User not found");
-    }
-    await this.userData.deleteUser(id);
+    await this.userData.deleteUser(user.id);
   };
 
   forgotPassword = async (email: string): Promise<void> => {
@@ -102,27 +99,23 @@ class UserService {
     }
 
     // GENERATE OTP
-    const otp = randomInt(100000, 999999) + "";
+    const otp = randomInt(100000, 999999).toString();
     const expiryMinutes = 10; // Minutes
     const otpObject = await this.userData.initiatePasswordReset(
       user.email,
       otp,
       expiryMinutes
     );
-    if (!otpObject) {
-      throw new HttpError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "Failed to set OTP"
-      );
-    }
 
     // SEND EMAIL
-    console.log(`Password reset OTP for ${email}: ${otp}`);
+    console.log(`Password reset OTP for ${otpObject.email}: ${otp}`);
 
-    await sendResetPasswordEmail(email, otp).catch((err) => {
+    await sendResetPasswordEmail(email, otp).catch((error: unknown) => {
       throw new HttpError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "Failed to send OTP email"
+        error instanceof HttpError
+          ? error.statusCode
+          : HttpStatus.INTERNAL_SERVER_ERROR,
+        error instanceof Error ? error.message : "Failed to send OTP email"
       );
     });
   };

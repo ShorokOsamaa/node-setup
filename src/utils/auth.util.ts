@@ -1,5 +1,5 @@
 import jwt, { Secret, SignOptions } from "jsonwebtoken";
-
+import { JwtPayload } from "../types/index.js";
 import Env from "../config/env.config.js";
 import { HttpStatus, UserPublic } from "../types/index.js";
 import HttpError from "./error.util.js";
@@ -30,10 +30,10 @@ const signUser = (user: UserPublic) => {
   return { token, expiresAt };
 };
 
-const verifyToken = (authToken: string): jwt.JwtPayload => {
+const verifyToken = (authToken: string): JwtPayload => {
   try {
     const decoded = jwt.verify(authToken, ACCESS_TOKEN_SECRET as Secret);
-    return decoded as jwt.JwtPayload;
+    return decoded as JwtPayload;
   } catch (error) {
     // Handle specific JWT errors
     if (error instanceof jwt.TokenExpiredError) {

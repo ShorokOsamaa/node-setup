@@ -73,7 +73,7 @@ class UserData {
     const total = await this.prisma.user.count({ where });
 
     const users = await this.prisma.user.findMany({ skip, take, where });
-    const usersList = users.map(this.convertToUserPublicDTO);
+    const usersList = users.map((user) => this.convertToUserPublicDTO(user));
 
     return {
       pagination: {
@@ -135,7 +135,7 @@ class UserData {
       throw new HttpError(HttpStatus.BAD_REQUEST, "OTP has expired");
     }
     const newExpiry = new Date(Date.now() + expiryMinutes * 60 * 1000);
-    const updatedUser = await this.prisma.user.update({
+    await this.prisma.user.update({
       where: { id: userId },
       data: {
         resetOtp: null,
@@ -144,13 +144,6 @@ class UserData {
         resetSessionExpiry: newExpiry,
       },
     });
-
-    if (!updatedUser) {
-      throw new HttpError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "Failed to create reset session"
-      );
-    }
 
     return sessionToken;
   }
