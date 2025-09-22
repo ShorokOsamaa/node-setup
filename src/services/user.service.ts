@@ -1,15 +1,18 @@
 import { randomBytes, randomInt } from "crypto";
 import UserData from "../persistance/user.data.js";
 import {
+  AuthResponse,
   CreateUserInput,
   HttpStatus,
+  User,
   UserListResponse,
   UserPublic,
   UserQueryParams,
 } from "../types/index.js";
 import HttpError from "../utils/error.util.js";
-import { hashPassword } from "../utils/hashing.util.js";
+import { comparePassword, hashPassword } from "../utils/hashing.util.js";
 import { sendResetPasswordEmail } from "../utils/email.util.js";
+import { signUser } from "../utils/auth.util.js";
 
 class UserService {
   private userData = new UserData();
@@ -41,10 +44,24 @@ class UserService {
     return user;
   };
 
-  updateUser = async (
-    id: number,
-    data: Partial<CreateUserInput>
-  ): Promise<UserPublic> => {
+  login = async (email: string, password: string) => {
+    const user = await this.userData.findByEmail(email);
+    if (!user) {
+      throw new HttpError(HttpStatus.UNAUTHORIZED, "Invalid email or password");
+    }
+
+    const isPasswordValid = await comparePassword(password, user.password);
+    if (!isPasswordValid) {
+      throw new HttpError(HttpStatus.UNAUTHORIZED, "Invalid email or password");
+    }
+    const { token, expiresAt } = signUser(user);
+
+    const userPublic: UserPublic = await this.userData.findById(user.id);
+    const authResponse: AuthResponse = { token, user: userPublic, expiresAt };
+    return authResponse;
+  };
+
+  updateUser = async (id: number, data: Partial<User>): Promise<UserPublic> => {
     if (data.email) {
       const existingUser = await this.userData.findByEmail(data.email);
       if (existingUser && existingUser.id !== id) {
@@ -61,6 +78,7 @@ class UserService {
     }
     if (data.password) {
       data.password = await hashPassword(data.password);
+      data.passwordChangedAt = new Date();
     }
     const updatedUser: UserPublic = await this.userData.updateUser(id, data);
     return updatedUser;
@@ -165,6 +183,7 @@ class UserService {
     const hashedPassword = await hashPassword(newPassword);
     await this.userData.updateUser(user.id, {
       password: hashedPassword,
+      passwordChangedAt: new Date(),
       resetOtp: null,
       otpExpiry: null,
       resetSessionToken: null,

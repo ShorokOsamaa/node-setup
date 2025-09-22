@@ -10,14 +10,15 @@ import {
   PasswordResetVerifySchema,
   UpdateUserSchema,
   UserIdParamSchema,
+  UserLoginSchema,
 } from "../validations/userValidation.js";
+import { hasValidRole, isAuth } from "../middleware/auth.middleware.js";
 
 const router = Router();
 const userController = new UserController();
 
-// // Auth
-// router.post('/register', UserController.register);
-// router.post('/login', UserController.login);
+// Auth
+router.post("/login", validate(UserLoginSchema, "body"), userController.login);
 
 // Password Reset
 router.post(
@@ -36,18 +37,34 @@ router.post(
   userController.resetPassword
 );
 
+// User CRUD
 router
   .route("/")
-  .post(validate(CreateUserSchema), userController.createUser)
-  .get(validate(GetAllUsersSchema, "query"), userController.getAllUsers);
+  .post(
+    isAuth,
+    hasValidRole(["ADMIN"]),
+    validate(CreateUserSchema),
+    userController.createUser
+  )
+  .get(
+    isAuth,
+    validate(GetAllUsersSchema, "query"),
+    userController.getAllUsers
+  );
 router
   .route("/:id")
   .get(validate(UserIdParamSchema, "params"), userController.getUserById)
   .patch(
+    isAuth,
     validate(UserIdParamSchema, "params"),
     validate(UpdateUserSchema, "body"),
     userController.updateUser
   )
-  .delete(validate(UserIdParamSchema, "params"), userController.deleteUser);
+  .delete(
+    isAuth,
+    hasValidRole(["ADMIN"]),
+    validate(UserIdParamSchema, "params"),
+    userController.deleteUser
+  );
 
 export default router;

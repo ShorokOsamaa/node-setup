@@ -3,6 +3,7 @@ import { NextFunction, Response } from "express";
 import { AuthRequest, HttpStatus } from "../types/index.js";
 import { verifyToken } from "../utils/auth.util.js";
 import HttpError from "../utils/error.util.js";
+import UserData from "../persistance/user.data.js";
 
 // isAuth middleware to verify JWT token
 export const isAuth = async (
@@ -26,6 +27,21 @@ export const isAuth = async (
     // Verify token
     const decoded = verifyToken(token);
 
+    const userData = new UserData();
+    const user = await userData.findById(decoded.user.id);
+
+    if (user.passwordChangedAt) {
+      const changedTimestamp = Math.floor(
+        user.passwordChangedAt.getTime() / 1000
+      );
+      if (decoded.iat && decoded.iat < changedTimestamp) {
+        throw new HttpError(
+          HttpStatus.UNAUTHORIZED,
+          "Password recently changed. Please log in again."
+        );
+      }
+    }
+
     // Attach user info to request
     req.user = {
       id: decoded.user.id,
@@ -37,7 +53,9 @@ export const isAuth = async (
   } catch (error) {
     // Generic error
     throw new HttpError(
-      HttpStatus.INTERNAL_SERVER_ERROR,
+      error instanceof HttpError
+        ? error.statusCode
+        : HttpStatus.INTERNAL_SERVER_ERROR,
       error instanceof Error ? error.message : "Authentication error"
     );
   }

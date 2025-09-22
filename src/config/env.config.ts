@@ -23,5 +23,5 @@ const Env = {
   EMAIL_PORT: parseInt(process.env.EMAIL_PORT ?? "587", 10),
   EMAIL_CC: process.env.EMAIL_CC,
 };
-console.log("Environment Variables:", Env);
+// console.log("Environment Variables:", Env);
 export default Env;

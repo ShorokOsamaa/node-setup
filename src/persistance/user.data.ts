@@ -29,7 +29,7 @@ class UserData {
     return this.convertToUserPublicDTO(user);
   }
 
-  async findByEmail(email: string): Promise<null | User> {
+  async findByEmail(email: string): Promise<User | null> {
     const user = await this.prisma.user.findUnique({
       where: { email },
     });
@@ -37,7 +37,7 @@ class UserData {
     return user;
   }
 
-  async findById(id: number): Promise<UserPublic> {
+  async findById(id: number): Promise<User> {
     const user = await this.prisma.user.findUnique({
       where: { id },
     });
@@ -46,7 +46,7 @@ class UserData {
       throw new HttpError(HttpStatus.NOT_FOUND, "User not found");
     }
 
-    return this.convertToUserPublicDTO(user);
+    return user;
   }
 
   async findByUsername(username: string): Promise<null | User> {

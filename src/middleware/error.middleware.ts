@@ -52,6 +52,7 @@ const globalErrorHandler = (
   res: Response,
   next: NextFunction // eslint-disable-line no-unused-vars // this is needed to identify it as an error handling middleware
 ) => {
+  console.log(err);
   err.statusCode = err.statusCode || 500;
   err.status = err.status || "error";
   if (Env.SERVER_ENV === "development") {

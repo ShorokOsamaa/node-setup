@@ -26,7 +26,7 @@ export interface AuthRequest extends Request {
  * Authentication
  */
 export interface AuthResponse {
-  expiresIn: number;
+  expiresAt: number | null;
   refreshToken?: string;
   token: string;
   user: UserPublic;
@@ -41,7 +41,7 @@ export interface CreateUserInput {
   username: string;
 }
 
-export interface jwtPayload {
+export interface JwtPayload {
   user: {
     id: number;
     role: string;
@@ -70,6 +70,7 @@ export interface User {
   lastName?: null | string;
   otpExpiry?: Date | null;
   password: string;
+  passwordChangedAt?: Date | null;
   resetOtp?: null | string;
   resetSessionExpiry?: Date | null;
   resetSessionToken?: null | string;

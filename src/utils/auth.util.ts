@@ -1,7 +1,7 @@
 import jwt, { Secret, SignOptions } from "jsonwebtoken";
 
 import Env from "../config/env.config.js";
-import { HttpStatus, jwtPayload, UserPublic } from "../types/index.js";
+import { HttpStatus, UserPublic } from "../types/index.js";
 import HttpError from "./error.util.js";
 
 const { ACCESS_TOKEN_EXPIRE, ACCESS_TOKEN_SECRET } = Env;
@@ -20,16 +20,20 @@ const signUser = (user: UserPublic) => {
   };
 
   const token = jwt.sign({ user }, ACCESS_TOKEN_SECRET as Secret, options);
-  return token;
+
+  // decode to get exp timestamp
+  const decoded = jwt.decode(token);
+  let expiresAt: number | null = null;
+  if (decoded && typeof decoded !== "string" && decoded.exp) {
+    expiresAt = decoded.exp * 1000; // convert to ms timestamp
+  }
+  return { token, expiresAt };
 };
 
-const verifyToken = (authToken: string): jwtPayload => {
+const verifyToken = (authToken: string): jwt.JwtPayload => {
   try {
-    const decoded = jwt.verify(
-      authToken,
-      ACCESS_TOKEN_SECRET as Secret
-    ) as jwtPayload;
-    return decoded;
+    const decoded = jwt.verify(authToken, ACCESS_TOKEN_SECRET as Secret);
+    return decoded as jwt.JwtPayload;
   } catch (error) {
     // Handle specific JWT errors
     if (error instanceof jwt.TokenExpiredError) {

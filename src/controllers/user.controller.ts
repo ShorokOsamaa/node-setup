@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 
 import UserService from "../services/user.service.js";
 import {
+  AuthResponse,
   CreateUserInput,
   UserListResponse,
   UserQueryParams,
@@ -12,6 +13,7 @@ import {
   PasswordResetRequestSchemaType,
   PasswordResetVerifySchemaType,
   UserIdParamSchemaType,
+  UserLoginSchemaType,
 } from "../validations/userValidation.js";
 
 class UserController {
@@ -27,6 +29,20 @@ class UserController {
       success: true,
     };
     return res.status(HttpStatus.CREATED).json(response);
+  };
+
+  login = async (req: Request, res: Response) => {
+    const { email, password } = req.validatedBody as UserLoginSchemaType;
+    const authResponse: AuthResponse = await this.userService.login(
+      email,
+      password
+    );
+    const response: ApiResponse<AuthResponse> = {
+      data: authResponse,
+      message: "Login successful",
+      success: true,
+    };
+    return res.status(HttpStatus.OK).json(response);
   };
 
   getAllUsers = async (req: Request, res: Response) => {

@@ -3,7 +3,7 @@ import { z } from "zod";
 export const UserRoleSchema = z.enum(["USER", "ADMIN"]);
 
 export const CreateUserSchema = z.object({
-  email: z.email({ message: "Invalid email address" }),
+  email: z.email({ message: "Invalid email address" }).toLowerCase(),
   firstName: z.string().optional().nullable(),
   lastName: z.string().optional().nullable(),
   password: z
@@ -22,8 +22,13 @@ export const CreateUserSchema = z.object({
   username: z.string(),
 });
 
+export const UserLoginSchema = z.object({
+  email: z.email({ message: "Invalid email address" }).toLowerCase(),
+  password: z.string().min(1, { message: "Password is required" }),
+});
+
 export const UpdateUserSchema = z.object({
-  email: z.email({ message: "Invalid email address" }).optional(),
+  email: z.email({ message: "Invalid email address" }).toLowerCase().optional(),
   firstName: z.string().optional().nullable(),
   lastName: z.string().optional().nullable(),
   password: z
@@ -54,18 +59,18 @@ export const UserIdParamSchema = z.object({
 });
 
 export const PasswordResetRequestSchema = z.object({
-  email: z.email({ message: "Invalid email address" }),
+  email: z.email({ message: "Invalid email address" }).toLowerCase(),
 });
 
 export const PasswordResetVerifySchema = z.object({
-  email: z.email({ message: "Invalid email address" }),
+  email: z.email({ message: "Invalid email address" }).toLowerCase(),
   otp: z.coerce
     .string()
     .min(6, { message: "OTP must be at least 6 characters long" }),
 });
 
 export const PasswordResetConfirmSchema = z.object({
-  email: z.email({ message: "Invalid email address" }),
+  email: z.email({ message: "Invalid email address" }).toLowerCase(),
   newPassword: z
     .string()
     .min(8, { message: "Password must be at least 8 characters long" })
@@ -82,6 +87,7 @@ export const PasswordResetConfirmSchema = z.object({
 });
 
 export type CreateUserSchemaType = z.infer<typeof CreateUserSchema>;
+export type UserLoginSchemaType = z.infer<typeof UserLoginSchema>;
 export type UpdateUserSchemaType = z.infer<typeof UpdateUserSchema>;
 export type UserRoleType = z.infer<typeof UserRoleSchema>;
 export type UserIdParamSchemaType = z.infer<typeof UserIdParamSchema>;
